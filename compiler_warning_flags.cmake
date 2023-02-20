@@ -112,6 +112,31 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
       -Wpedantic
     )
   endif()
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+  if(USE_ALL_WARNINGS)
+    set(
+      cxx_warning_flags
+      /W4
+      /permissive
+    )
+
+    set(
+      c_warning_flags
+      /W4
+      /permissive
+    )
+  else()
+    set(
+      cxx_warning_flags
+      /W4
+    )
+
+    set(
+      c_warning_flags
+      /W4
+    )
+  endif()
+
 else()
   message(FATAL_ERROR "no valid compiler")
 endif()
