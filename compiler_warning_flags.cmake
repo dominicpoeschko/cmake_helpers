@@ -75,7 +75,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
       -Wstrict-null-sentinel
       -Wno-attributes
       #-Wstrict-overflow=2
-      -Wundef
+      #-Wundef
     )
 
     set(
