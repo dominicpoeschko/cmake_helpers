@@ -4,21 +4,12 @@ set(
   CACHE BOOL "Set debug flags for used stdlib"
 )
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND NOT ${CMAKE_CROSSCOMPILING})
-  set(
-    STD_LIB
-    libc++
-    CACHE STRING "Choose the stdlib to use, options are: libc++ libstdc++"
-  )
-  set_property(CACHE STD_LIB PROPERTY STRINGS libc++ libstdc++)
-else()
-  set(
-    STD_LIB
-    libstdc++
-    CACHE STRING "Choose the stdlib to use, options are: libc++ libstdc++"
-  )
-  set_property(CACHE STD_LIB PROPERTY STRINGS libc++ libstdc++)
-endif()
+set(
+  STD_LIB
+  libstdc++
+  CACHE STRING "Choose the stdlib to use, options are: libc++ libstdc++"
+)
+set_property(CACHE STD_LIB PROPERTY STRINGS libc++ libstdc++)
 
 set(
   std_lib_libcpp_debug_cxx_flags
