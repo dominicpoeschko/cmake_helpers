@@ -21,7 +21,7 @@ function(find_or_fetch_package name version)
       ${name}
       GIT_REPOSITORY ${PARSED_ARGS_GIT_REPOSITORY}
       GIT_TAG ${PARSED_ARGS_GIT_TAG}
-      GIT_SHALLOW TRUE)
+    )
     FetchContent_MakeAvailable(${name})
   endif()
 
