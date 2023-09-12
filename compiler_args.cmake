@@ -156,5 +156,8 @@ function(target_add_optimizer_flags target scope)
         target_link_options(${target} ${scope} ${lto_flag} ${native_flag})
     endif()
   endif()
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    target_compile_definitions(${target} ${scope} NOMINMAX)
+  endif()
 
 endfunction()
