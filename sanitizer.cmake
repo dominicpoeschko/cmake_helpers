@@ -10,9 +10,9 @@ set(sanitizer_common_flags_clang ${sanitizer_common_flags})
 set(sanitizer_common_flags_gcc ${sanitizer_common_flags})
 
 set(sanitizer_thread_flags_clang ${sanitizer_common_flags_clang}
-                                 -fsanitize=thread,undefined,integer,implicit-conversion,nullability)
+                                 -fsanitize=thread,integer,implicit-conversion,nullability)
 
-set(sanitizer_thread_flags_gcc ${sanitizer_common_flags_gcc} -fsanitize=thread,undefined)
+set(sanitizer_thread_flags_gcc ${sanitizer_common_flags_gcc} -fsanitize=thread)
 
 set(sanitizer_address_flags_clang ${sanitizer_common_flags_clang}
                                   -fsanitize=address,undefined,integer,implicit-conversion,nullability)
