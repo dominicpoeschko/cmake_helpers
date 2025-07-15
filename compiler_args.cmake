@@ -11,21 +11,21 @@ else()
 endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Release" "Debug")
 
-set(CPP_STANDARD
+set(USE_CPP_STANDARD
     "23"
     CACHE STRING "Choose the C++ Standard, options are: 11 14 17 20 23")
-set_property(CACHE CPP_STANDARD PROPERTY STRINGS "11" "14" "17" "20" "23")
+set_property(CACHE USE_CPP_STANDARD PROPERTY STRINGS "11" "14" "17" "20" "23")
 
-set(C_STANDARD
+set(USE_C_STANDARD
     "23"
     CACHE STRING "Choose the C Standard, options are: 99 11 17 20")
-set_property(CACHE C_STANDARD PROPERTY STRINGS "99" "11" "17" "20")
+set_property(CACHE USE_C_STANDARD PROPERTY STRINGS "99" "11" "17" "20")
 
-set(OPTIMIZE_LEVEL
+set(USE_OPTIMIZE_LEVEL
     "3"
     CACHE STRING "Choose the optimize level, options are: g 0 1 2 3 s fast")
 set_property(
-    CACHE OPTIMIZE_LEVEL
+    CACHE USE_OPTIMIZE_LEVEL
     PROPERTY STRINGS
              "g"
              "0"
@@ -61,7 +61,7 @@ else()
         CACHE BOOL "use march=native")
 endif()
 
-set(optimize_flag -O${OPTIMIZE_LEVEL})
+set(optimize_flag -O${USE_OPTIMIZE_LEVEL})
 
 if(USE_LTO)
     set(lto_flag -flto=auto)
@@ -109,11 +109,11 @@ set(CMAKE_CXX_FLAGS_RELEASE "")
 function(target_add_optimizer_flags target scope)
     target_link_options(${target} ${scope} "${strip_flag}")
 
-    set_target_properties(${target} PROPERTIES CXX_STANDARD ${CPP_STANDARD})
+    set_target_properties(${target} PROPERTIES CXX_STANDARD ${USE_CPP_STANDARD})
     set_target_properties(${target} PROPERTIES CXX_STANDARD_REQUIRED TRUE)
     set_target_properties(${target} PROPERTIES CXX_EXTENSIONS FALSE)
 
-    set_target_properties(${target} PROPERTIES C_STANDARD ${C_STANDARD})
+    set_target_properties(${target} PROPERTIES C_STANDARD ${USE_C_STANDARD})
     set_target_properties(${target} PROPERTIES C_STANDARD_REQUIRED TRUE)
     set_target_properties(${target} PROPERTIES C_EXTENSIONS FALSE)
 
@@ -122,7 +122,7 @@ function(target_add_optimizer_flags target scope)
             target_compile_options(${target} ${scope} $<$<COMPILE_LANGUAGE:CXX>:/O2 -DNDEBUG>)
             target_compile_options(${target} ${scope} $<$<COMPILE_LANGUAGE:C>:/O2 -DNDEBUG>)
         else()
-            if("${STD_LIB}" STREQUAL "libstdc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+            if("${USE_STD_LIB}" STREQUAL "libstdc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
                 set(tmp_lto_flag)
             else()
                 set(tmp_lto_flag ${lto_flag})

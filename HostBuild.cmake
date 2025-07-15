@@ -14,9 +14,20 @@ function(configure_host_build targetname)
 
     set(build_dir ${CMAKE_CURRENT_BINARY_DIR}/host_build)
 
+    get_cmake_property(all_variables VARIABLES)
+    set(cmake_extra_args)
+    foreach(variable_name ${all_variables})
+        if(variable_name MATCHES "^USE")
+            list(APPEND cmake_extra_args "-D${variable_name}=${${variable_name}}")
+        endif()
+        if(variable_name MATCHES "^CMAKE_BUILD_TYPE")
+            list(APPEND cmake_extra_args "-D${variable_name}=${${variable_name}}")
+        endif()
+    endforeach()
+
     execute_process(
         COMMAND ${CMAKE_COMMAND} -E make_directory ${build_dir}
-        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_LIST_DIR} -B ${build_dir}
+        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_LIST_DIR} -B ${build_dir} ${cmake_extra_args}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         RESULT_VARIABLE STATUS ${extra_args})
 

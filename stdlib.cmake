@@ -2,10 +2,10 @@ set(USE_STDLIB_DEBUG
     false
     CACHE BOOL "Set debug flags for used stdlib")
 
-set(STD_LIB
+set(USE_STD_LIB
     libstdc++
     CACHE STRING "Choose the stdlib to use, options are: libc++ libstdc++")
-set_property(CACHE STD_LIB PROPERTY STRINGS libc++ libstdc++)
+set_property(CACHE USE_STD_LIB PROPERTY STRINGS libc++ libstdc++)
 
 set(std_lib_libcpp_debug_cxx_flags -D_LIBCPP_DEBUG=1 -D_LIBCPP_ENABLE_NODISCARD)
 
@@ -19,7 +19,7 @@ set(std_lib_libstdcpp_debug_linker_flags)
 
 function(target_add_stdlib_debug_flags target)
     if(USE_STDLIB_DEBUG)
-        if("${STD_LIB}" STREQUAL "libc++")
+        if("${USE_STD_LIB}" STREQUAL "libc++")
             target_compile_options(${target} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${std_lib_libcpp_debug_cxx_flags}>)
             target_compile_options(${target} PUBLIC $<$<COMPILE_LANGUAGE:C>:${std_lib_libcpp_debug_c_flags}>)
             target_link_options(${target} PUBLIC ${std_lib_libcpp_debug_linker_flags})
@@ -32,13 +32,13 @@ function(target_add_stdlib_debug_flags target)
 endfunction()
 
 function(target_add_stdlib_flags target)
-    if("${STD_LIB}" STREQUAL "libc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    if("${USE_STD_LIB}" STREQUAL "libc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         target_compile_options(${target} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
         target_link_options(${target} PUBLIC -fuse-ld=lld -stdlib=libc++)
-    elseif("${STD_LIB}" STREQUAL "libstdc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    elseif("${USE_STD_LIB}" STREQUAL "libstdc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         target_compile_options(${target} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libstdc++>)
         target_link_options(${target} PUBLIC -fuse-ld=ld -stdlib=libstdc++)
-    elseif("${STD_LIB}" STREQUAL "libc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    elseif("${USE_STD_LIB}" STREQUAL "libc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         target_compile_options(${target} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-nostdinc++ -I/usr/include/c++/v1>)
         target_link_options(
             ${target}
@@ -51,7 +51,7 @@ function(target_add_stdlib_flags target)
             -lc_nonshared
             -lgcc_s
             -lgcc)
-    elseif("${STD_LIB}" STREQUAL "libstdc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    elseif("${USE_STD_LIB}" STREQUAL "libstdc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
     else()
         message(AUTHOR_WARNING "something wrong")

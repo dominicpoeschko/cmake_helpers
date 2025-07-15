@@ -1,3 +1,7 @@
+set(USE_FORCE_FETCH
+    false
+    CACHE BOOL "Force FindOrFetch to always fetch")
+
 function(find_or_fetch_package name)
 
     cmake_parse_arguments(PARSE_ARGV 1 PARSED_ARGS "CONFIG;QUIET" "GIT_REPOSITORY;GIT_TAG;VERSION;GIT_SHALLOW"
@@ -38,7 +42,10 @@ function(find_or_fetch_package name)
     if(NOT PARSED_ARGS_QUIET)
         message(STATUS "Searching for ${name} package...")
     endif()
-    find_package(${name} ${VERSION_ARG} ${CONFIG_ARG} ${COMPONENTS_ARG} QUIET)
+
+    if(NOT USE_FORCE_FETCH)
+        find_package(${name} ${VERSION_ARG} ${CONFIG_ARG} ${COMPONENTS_ARG} QUIET)
+    endif()
 
     if(NOT ${name}_FOUND)
         if(NOT PARSED_ARGS_QUIET)

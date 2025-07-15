@@ -4,7 +4,7 @@ set(USE_ALL_WARNINGS
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     if(USE_ALL_WARNINGS)
-        if(${CPP_STANDARD} GREATER 11)
+        if(${USE_CPP_STANDARD} GREATER 11)
             set(compat_flag)
         else()
             set(compat_flag -Wc++11-compat -Wc++11-compat-deprecated-writable-strings -Wc++11-compat-pedantic)
