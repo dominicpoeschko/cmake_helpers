@@ -58,6 +58,22 @@ if(USE_TIDY)
             google-explicit-constructor
             hicpp-explicit-conversions
             cppcoreguidelines-pro-bounds-pointer-arithmetic
+            bugprone-exception-escape
+            misc-include-cleaner
+            readability-function-cognitive-complexity
+            cert-dcl59-cpp
+            fuchsia-header-anon-namespaces
+            google-build-namespaces
+            cppcoreguidelines-pro-type-reinterpret-cast
+            bugprone-empty-catch
+            misc-no-recursion
+            readability-redundant-casting
+            modernize-use-integer-sign-comparison
+            google-readability-casting
+            fuchsia-multiple-inheritance
+            cppcoreguidelines-pro-bounds-constant-array-index
+            cppcoreguidelines-rvalue-reference-param-not-moved
+            cppcoreguidelines-avoid-const-or-ref-data-members
             ${GLOBAL_CXX_CLANG_TIDY_DISABLED_CHECKS})
 
         set(c_clang_tidy_disabled_checks ${GLOBAL_C_CLANG_TIDY_DISABLED_CHECKS})

@@ -63,7 +63,7 @@ function(find_or_fetch_package name)
         endif()
 
         if(PARSED_ARGS_PATCH_COMMAND)
-            list(APPEND FETCH_ARGS PATCH_COMMAND ${PARSED_ARGS_PATCH_COMMAND} UPDATE_DISCONNECTED 1)
+            list(APPEND FETCH_ARGS PATCH_COMMAND ${PARSED_ARGS_PATCH_COMMAND} UPDATE_DISCONNECTED TRUE)
         endif()
 
         FetchContent_Declare(${name} ${FETCH_ARGS})
