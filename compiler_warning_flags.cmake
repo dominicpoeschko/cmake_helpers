@@ -22,7 +22,9 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
             -Wno-padded
             -Wno-switch-default
             -Wno-disabled-macro-expansion
-            -Wno-unsafe-buffer-usage-in-libc-call)
+            -Wno-unsafe-buffer-usage-in-libc-call
+            -Wno-nrvo
+            -Wno-unknown-warning-option)
 
         set(c_warning_flags -Weverything -Wpedantic -Wno-padded)
     else()
