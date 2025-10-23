@@ -15,7 +15,7 @@ function(configure_host_build targetname)
     set(build_dir ${CMAKE_CURRENT_BINARY_DIR}/host_build)
 
     get_cmake_property(all_variables VARIABLES)
-    set(cmake_extra_args)
+    set(cmake_extra_args "-G${CMAKE_GENERATOR}")
     foreach(variable_name ${all_variables})
         if(variable_name MATCHES "^USE")
             list(APPEND cmake_extra_args "-D${variable_name}=${${variable_name}}")
