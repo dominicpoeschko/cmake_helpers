@@ -5,7 +5,7 @@ set(USE_FORCE_FETCH
 function(find_or_fetch_package name)
 
     cmake_parse_arguments(PARSE_ARGV 1 PARSED_ARGS "CONFIG;QUIET" "GIT_REPOSITORY;GIT_TAG;VERSION;GIT_SHALLOW"
-                          "COMPONENTS;PATCH_COMMAND")
+                          "COMPONENTS;PATCH_COMMAND;UPDATE_COMMAND")
 
     if(PARSED_ARGS_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "unknown argument ${PARSED_ARGS_UNPARSED_ARGUMENTS}")
@@ -64,6 +64,10 @@ function(find_or_fetch_package name)
 
         if(PARSED_ARGS_PATCH_COMMAND)
             list(APPEND FETCH_ARGS PATCH_COMMAND ${PARSED_ARGS_PATCH_COMMAND} UPDATE_DISCONNECTED TRUE)
+        endif()
+
+        if(PARSED_ARGS_UPDATE_COMMAND)
+            list(APPEND FETCH_ARGS UPDATE_COMMAND ${PARSED_ARGS_UPDATE_COMMAND})
         endif()
 
         FetchContent_Declare(${name} ${FETCH_ARGS})
