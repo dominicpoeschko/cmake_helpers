@@ -39,5 +39,6 @@ function(configure_host_build targetname)
         ${targetname}
         COMMAND ${CMAKE_COMMAND} --build ${build_dir}
         WORKING_DIRECTORY ${build_dir}
-        BYPRODUCTS ${build_dir}/${targetname})
+        BYPRODUCTS ${build_dir}/${targetname}
+        COMMENT "Building host tool: ${targetname}")
 endfunction()
