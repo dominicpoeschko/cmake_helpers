@@ -9,7 +9,8 @@ set(USE_GIT_BRANCH
 function(find_or_fetch_package name)
 
     cmake_parse_arguments(
-        PARSE_ARGV 1 PARSED_ARGS "CONFIG;QUIET" "GIT_REPOSITORY;GIT_TAG;VERSION;GIT_SHALLOW;GIT_BRANCH"
+        PARSE_ARGV 1 PARSED_ARGS "CONFIG;QUIET"
+        "GIT_REPOSITORY;GIT_TAG;VERSION;GIT_SHALLOW;GIT_BRANCH;DOWNLOAD_URL;DOWNLOAD_HASH"
         "COMPONENTS;PATCH_COMMAND;UPDATE_COMMAND;PATCH_FILE")
 
     if(PARSED_ARGS_UNPARSED_ARGUMENTS)
@@ -23,12 +24,12 @@ function(find_or_fetch_package name)
         )
     endif()
 
-    if(NOT PARSED_ARGS_GIT_REPOSITORY)
-        message(FATAL_ERROR "find_or_fetch_package needs GIT_REPOSITORY")
+    if(NOT PARSED_ARGS_DOWNLOAD_URL AND NOT PARSED_ARGS_GIT_REPOSITORY)
+        message(FATAL_ERROR "find_or_fetch_package needs either DOWNLOAD_URL or GIT_REPOSITORY")
     endif()
 
-    if(NOT PARSED_ARGS_GIT_TAG)
-        message(FATAL_ERROR "find_or_fetch_package needs GIT_TAG")
+    if(PARSED_ARGS_GIT_REPOSITORY AND NOT PARSED_ARGS_GIT_TAG)
+        message(FATAL_ERROR "find_or_fetch_package needs GIT_TAG when using GIT_REPOSITORY")
     endif()
 
     set(CONFIG_ARG)
@@ -61,17 +62,36 @@ function(find_or_fetch_package name)
 
     if(NOT ${name}_FOUND)
         if(NOT PARSED_ARGS_QUIET)
-            message(STATUS "${name} not found locally, fetching from ${PARSED_ARGS_GIT_REPOSITORY}")
+            if(PARSED_ARGS_DOWNLOAD_URL)
+                message(STATUS "${name} not found locally, downloading from ${PARSED_ARGS_DOWNLOAD_URL}")
+            else()
+                message(STATUS "${name} not found locally, fetching from ${PARSED_ARGS_GIT_REPOSITORY}")
+            endif()
         endif()
 
         include(FetchContent)
 
-        set(FETCH_ARGS GIT_REPOSITORY ${PARSED_ARGS_GIT_REPOSITORY} GIT_TAG ${GIT_REF_ARG})
-
-        if(NOT PARSED_ARGS_GIT_SHALLOW)
-            list(APPEND FETCH_ARGS GIT_SHALLOW TRUE)
+        if(PARSED_ARGS_DOWNLOAD_URL)
+            # URL-based download (faster for releases)
+            set(FETCH_ARGS URL ${PARSED_ARGS_DOWNLOAD_URL})
+            if(PARSED_ARGS_DOWNLOAD_HASH)
+                list(APPEND FETCH_ARGS URL_HASH ${PARSED_ARGS_DOWNLOAD_HASH})
+            endif()
+            list(APPEND FETCH_ARGS DOWNLOAD_EXTRACT_TIMESTAMP ON)
         else()
-            list(APPEND FETCH_ARGS GIT_SHALLOW ${PARSED_ARGS_GIT_SHALLOW})
+            # Git-based clone (traditional method)
+            set(FETCH_ARGS GIT_REPOSITORY ${PARSED_ARGS_GIT_REPOSITORY} GIT_TAG ${GIT_REF_ARG})
+
+            # Git-specific options
+            if(NOT PARSED_ARGS_GIT_SHALLOW)
+                list(APPEND FETCH_ARGS GIT_SHALLOW TRUE)
+            else()
+                list(APPEND FETCH_ARGS GIT_SHALLOW ${PARSED_ARGS_GIT_SHALLOW})
+            endif()
+
+            if(NOT PARSED_ARGS_QUIET)
+                list(APPEND FETCH_ARGS GIT_PROGRESS TRUE)
+            endif()
         endif()
 
         if(PARSED_ARGS_PATCH_FILE)
@@ -177,6 +197,10 @@ function(populate_package name)
         list(APPEND FETCH_ARGS GIT_SHALLOW TRUE)
     else()
         list(APPEND FETCH_ARGS GIT_SHALLOW ${PARSED_ARGS_GIT_SHALLOW})
+    endif()
+
+    if(NOT PARSED_ARGS_QUIET)
+        list(APPEND FETCH_ARGS GIT_PROGRESS TRUE)
     endif()
 
     if(PARSED_ARGS_PATCH_FILE)
