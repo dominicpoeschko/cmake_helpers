@@ -2,13 +2,25 @@ set(USE_FORCE_FETCH
     false
     CACHE BOOL "Force FindOrFetch to always fetch")
 
+set(USE_GIT_BRANCH
+    false
+    CACHE BOOL "Use GIT_BRANCH instead of GIT_TAG when GIT_BRANCH is specified")
+
 function(find_or_fetch_package name)
 
-    cmake_parse_arguments(PARSE_ARGV 1 PARSED_ARGS "CONFIG;QUIET" "GIT_REPOSITORY;GIT_TAG;VERSION;GIT_SHALLOW"
-                          "COMPONENTS;PATCH_COMMAND;UPDATE_COMMAND")
+    cmake_parse_arguments(
+        PARSE_ARGV 1 PARSED_ARGS "CONFIG;QUIET" "GIT_REPOSITORY;GIT_TAG;VERSION;GIT_SHALLOW;GIT_BRANCH"
+        "COMPONENTS;PATCH_COMMAND;UPDATE_COMMAND;PATCH_FILE")
 
     if(PARSED_ARGS_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "unknown argument ${PARSED_ARGS_UNPARSED_ARGUMENTS}")
+    endif()
+
+    if(PARSED_ARGS_PATCH_FILE AND (PARSED_ARGS_PATCH_COMMAND OR PARSED_ARGS_UPDATE_COMMAND))
+        message(
+            FATAL_ERROR
+                "Cannot specify PATCH_FILE together with PATCH_COMMAND or UPDATE_COMMAND. Use either PATCH_FILE or manual commands."
+        )
     endif()
 
     if(NOT PARSED_ARGS_GIT_REPOSITORY)
@@ -34,9 +46,9 @@ function(find_or_fetch_package name)
         set(VERSION_ARG ${PARSED_ARGS_VERSION})
     endif()
 
-    set(QUIET_ARG QUIET)
-    if(NOT PARSED_ARGS_QUIET)
-        set(QUIET_ARG)
+    set(GIT_REF_ARG ${PARSED_ARGS_GIT_TAG})
+    if(USE_GIT_BRANCH AND PARSED_ARGS_GIT_BRANCH)
+        set(GIT_REF_ARG ${PARSED_ARGS_GIT_BRANCH})
     endif()
 
     if(NOT PARSED_ARGS_QUIET)
@@ -54,12 +66,52 @@ function(find_or_fetch_package name)
 
         include(FetchContent)
 
-        set(FETCH_ARGS GIT_REPOSITORY ${PARSED_ARGS_GIT_REPOSITORY} GIT_TAG ${PARSED_ARGS_GIT_TAG})
+        set(FETCH_ARGS GIT_REPOSITORY ${PARSED_ARGS_GIT_REPOSITORY} GIT_TAG ${GIT_REF_ARG})
 
         if(NOT PARSED_ARGS_GIT_SHALLOW)
             list(APPEND FETCH_ARGS GIT_SHALLOW TRUE)
         else()
             list(APPEND FETCH_ARGS GIT_SHALLOW ${PARSED_ARGS_GIT_SHALLOW})
+        endif()
+
+        if(PARSED_ARGS_PATCH_FILE)
+            list(
+                APPEND
+                FETCH_ARGS
+                PATCH_COMMAND
+                git
+                reset
+                --hard
+                HEAD
+                &&
+                git
+                clean
+                -fdx
+                &&
+                git
+                apply
+                --3way
+                ${PARSED_ARGS_PATCH_FILE}
+                UPDATE_COMMAND
+                git
+                fetch
+                origin
+                &&
+                git
+                reset
+                --hard
+                ${GIT_REF_ARG}
+                &&
+                git
+                clean
+                -fdx
+                &&
+                git
+                apply
+                --3way
+                ${PARSED_ARGS_PATCH_FILE}
+                UPDATE_DISCONNECTED
+                TRUE)
         endif()
 
         if(PARSED_ARGS_PATCH_COMMAND)
