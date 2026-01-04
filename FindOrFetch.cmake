@@ -135,3 +135,113 @@ function(find_or_fetch_package name)
     endif()
 
 endfunction()
+
+function(populate_package name)
+
+    cmake_parse_arguments(PARSE_ARGV 1 PARSED_ARGS "QUIET" "GIT_REPOSITORY;GIT_TAG;GIT_SHALLOW;GIT_BRANCH"
+                          "PATCH_COMMAND;UPDATE_COMMAND;PATCH_FILE")
+
+    if(PARSED_ARGS_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "unknown argument ${PARSED_ARGS_UNPARSED_ARGUMENTS}")
+    endif()
+
+    if(PARSED_ARGS_PATCH_FILE AND (PARSED_ARGS_PATCH_COMMAND OR PARSED_ARGS_UPDATE_COMMAND))
+        message(
+            FATAL_ERROR
+                "Cannot specify PATCH_FILE together with PATCH_COMMAND or UPDATE_COMMAND. Use either PATCH_FILE or manual commands."
+        )
+    endif()
+
+    if(NOT PARSED_ARGS_GIT_REPOSITORY)
+        message(FATAL_ERROR "populate_package needs GIT_REPOSITORY")
+    endif()
+
+    if(NOT PARSED_ARGS_GIT_TAG)
+        message(FATAL_ERROR "populate_package needs GIT_TAG")
+    endif()
+
+    set(GIT_REF_ARG ${PARSED_ARGS_GIT_TAG})
+    if(USE_GIT_BRANCH AND PARSED_ARGS_GIT_BRANCH)
+        set(GIT_REF_ARG ${PARSED_ARGS_GIT_BRANCH})
+    endif()
+
+    if(NOT PARSED_ARGS_QUIET)
+        message(STATUS "Fetching ${name} from ${PARSED_ARGS_GIT_REPOSITORY}")
+    endif()
+
+    include(FetchContent)
+
+    set(FETCH_ARGS GIT_REPOSITORY ${PARSED_ARGS_GIT_REPOSITORY} GIT_TAG ${GIT_REF_ARG})
+
+    if(NOT PARSED_ARGS_GIT_SHALLOW)
+        list(APPEND FETCH_ARGS GIT_SHALLOW TRUE)
+    else()
+        list(APPEND FETCH_ARGS GIT_SHALLOW ${PARSED_ARGS_GIT_SHALLOW})
+    endif()
+
+    if(PARSED_ARGS_PATCH_FILE)
+        list(
+            APPEND
+            FETCH_ARGS
+            PATCH_COMMAND
+            git
+            reset
+            --hard
+            HEAD
+            &&
+            git
+            clean
+            -fdx
+            &&
+            git
+            apply
+            --3way
+            ${PARSED_ARGS_PATCH_FILE}
+            UPDATE_COMMAND
+            git
+            fetch
+            origin
+            &&
+            git
+            reset
+            --hard
+            ${GIT_REF_ARG}
+            &&
+            git
+            clean
+            -fdx
+            &&
+            git
+            apply
+            --3way
+            ${PARSED_ARGS_PATCH_FILE}
+            UPDATE_DISCONNECTED
+            TRUE)
+    endif()
+
+    if(PARSED_ARGS_PATCH_COMMAND)
+        list(APPEND FETCH_ARGS PATCH_COMMAND ${PARSED_ARGS_PATCH_COMMAND} UPDATE_DISCONNECTED TRUE)
+    endif()
+
+    if(PARSED_ARGS_UPDATE_COMMAND)
+        list(APPEND FETCH_ARGS UPDATE_COMMAND ${PARSED_ARGS_UPDATE_COMMAND})
+    endif()
+
+    FetchContent_Populate(${name} ${FETCH_ARGS})
+
+    # Propagate FetchContent variables to parent scope
+    set(${name}_SOURCE_DIR
+        ${${name}_SOURCE_DIR}
+        PARENT_SCOPE)
+    set(${name}_BINARY_DIR
+        ${${name}_BINARY_DIR}
+        PARENT_SCOPE)
+    set(${name}_POPULATED
+        ${${name}_POPULATED}
+        PARENT_SCOPE)
+
+    if(NOT PARSED_ARGS_QUIET)
+        message(STATUS "Successfully fetched ${name}")
+    endif()
+
+endfunction()
