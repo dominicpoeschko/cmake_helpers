@@ -4,7 +4,7 @@ set(USE_FORCE_FETCH
 
 set(USE_GIT_BRANCH
     false
-    CACHE BOOL "Use GIT_BRANCH instead of GIT_TAG when GIT_BRANCH is specified")
+    CACHE BOOL "Use git clone with GIT_BRANCH instead of DOWNLOAD_URL when both are provided")
 
 function(find_or_fetch_package name)
 
@@ -30,6 +30,16 @@ function(find_or_fetch_package name)
 
     if(PARSED_ARGS_GIT_REPOSITORY AND NOT PARSED_ARGS_GIT_TAG)
         message(FATAL_ERROR "find_or_fetch_package needs GIT_TAG when using GIT_REPOSITORY")
+    endif()
+
+    # Determine fetch method: prefer git if USE_GIT_BRANCH is set and GIT_BRANCH is provided
+    set(USE_GIT_FETCH FALSE)
+    if(PARSED_ARGS_GIT_REPOSITORY)
+        if(USE_GIT_BRANCH AND PARSED_ARGS_GIT_BRANCH)
+            set(USE_GIT_FETCH TRUE)
+        elseif(NOT PARSED_ARGS_DOWNLOAD_URL)
+            set(USE_GIT_FETCH TRUE)
+        endif()
     endif()
 
     set(CONFIG_ARG)
@@ -62,24 +72,17 @@ function(find_or_fetch_package name)
 
     if(NOT ${name}_FOUND)
         if(NOT PARSED_ARGS_QUIET)
-            if(PARSED_ARGS_DOWNLOAD_URL)
-                message(STATUS "${name} not found locally, downloading from ${PARSED_ARGS_DOWNLOAD_URL}")
-            else()
+            if(USE_GIT_FETCH)
                 message(STATUS "${name} not found locally, fetching from ${PARSED_ARGS_GIT_REPOSITORY}")
+            else()
+                message(STATUS "${name} not found locally, downloading from ${PARSED_ARGS_DOWNLOAD_URL}")
             endif()
         endif()
 
         include(FetchContent)
 
-        if(PARSED_ARGS_DOWNLOAD_URL)
-            # URL-based download (faster for releases)
-            set(FETCH_ARGS URL ${PARSED_ARGS_DOWNLOAD_URL})
-            if(PARSED_ARGS_DOWNLOAD_HASH)
-                list(APPEND FETCH_ARGS URL_HASH ${PARSED_ARGS_DOWNLOAD_HASH})
-            endif()
-            list(APPEND FETCH_ARGS DOWNLOAD_EXTRACT_TIMESTAMP ON)
-        else()
-            # Git-based clone (traditional method)
+        if(USE_GIT_FETCH)
+            # Git-based clone (for development or when USE_GIT_BRANCH is set)
             set(FETCH_ARGS GIT_REPOSITORY ${PARSED_ARGS_GIT_REPOSITORY} GIT_TAG ${GIT_REF_ARG})
 
             # Git-specific options
@@ -92,6 +95,13 @@ function(find_or_fetch_package name)
             if(NOT PARSED_ARGS_QUIET)
                 list(APPEND FETCH_ARGS GIT_PROGRESS TRUE)
             endif()
+        else()
+            # URL-based download (faster for releases)
+            set(FETCH_ARGS URL ${PARSED_ARGS_DOWNLOAD_URL})
+            if(PARSED_ARGS_DOWNLOAD_HASH)
+                list(APPEND FETCH_ARGS URL_HASH ${PARSED_ARGS_DOWNLOAD_HASH})
+            endif()
+            list(APPEND FETCH_ARGS DOWNLOAD_EXTRACT_TIMESTAMP ON)
         endif()
 
         if(PARSED_ARGS_PATCH_FILE)
