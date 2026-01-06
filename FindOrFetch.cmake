@@ -10,7 +10,7 @@ function(find_or_fetch_package name)
 
     cmake_parse_arguments(
         PARSE_ARGV 1 PARSED_ARGS "CONFIG;QUIET"
-        "GIT_REPOSITORY;GIT_TAG;VERSION;GIT_SHALLOW;GIT_BRANCH;DOWNLOAD_URL;DOWNLOAD_HASH"
+        "GIT_REPOSITORY;GIT_TAG;VERSION;GIT_SHALLOW;GIT_BRANCH;DOWNLOAD_URL;DOWNLOAD_HASH;SOURCE_SUBDIR"
         "COMPONENTS;PATCH_COMMAND;UPDATE_COMMAND;PATCH_FILE")
 
     if(PARSED_ARGS_UNPARSED_ARGUMENTS)
@@ -152,6 +152,10 @@ function(find_or_fetch_package name)
             list(APPEND FETCH_ARGS UPDATE_COMMAND ${PARSED_ARGS_UPDATE_COMMAND})
         endif()
 
+        if(PARSED_ARGS_SOURCE_SUBDIR)
+            list(APPEND FETCH_ARGS SOURCE_SUBDIR ${PARSED_ARGS_SOURCE_SUBDIR})
+        endif()
+
         FetchContent_Declare(${name} ${FETCH_ARGS})
         FetchContent_MakeAvailable(${name})
 
@@ -168,8 +172,9 @@ endfunction()
 
 function(populate_package name)
 
-    cmake_parse_arguments(PARSE_ARGV 1 PARSED_ARGS "QUIET" "GIT_REPOSITORY;GIT_TAG;GIT_SHALLOW;GIT_BRANCH"
-                          "PATCH_COMMAND;UPDATE_COMMAND;PATCH_FILE")
+    cmake_parse_arguments(
+        PARSE_ARGV 1 PARSED_ARGS "QUIET" "GIT_REPOSITORY;GIT_TAG;GIT_SHALLOW;GIT_BRANCH;SOURCE_SUBDIR"
+        "PATCH_COMMAND;UPDATE_COMMAND;PATCH_FILE")
 
     if(PARSED_ARGS_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "unknown argument ${PARSED_ARGS_UNPARSED_ARGUMENTS}")
@@ -259,6 +264,10 @@ function(populate_package name)
 
     if(PARSED_ARGS_UPDATE_COMMAND)
         list(APPEND FETCH_ARGS UPDATE_COMMAND ${PARSED_ARGS_UPDATE_COMMAND})
+    endif()
+
+    if(PARSED_ARGS_SOURCE_SUBDIR)
+        list(APPEND FETCH_ARGS SOURCE_SUBDIR ${PARSED_ARGS_SOURCE_SUBDIR})
     endif()
 
     FetchContent_Populate(${name} ${FETCH_ARGS})
