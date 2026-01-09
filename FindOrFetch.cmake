@@ -82,13 +82,9 @@ function(find_or_fetch_package name)
         include(FetchContent)
 
         if(USE_GIT_FETCH)
-            # Git-based clone (for development or when USE_GIT_BRANCH is set)
             set(FETCH_ARGS GIT_REPOSITORY ${PARSED_ARGS_GIT_REPOSITORY} GIT_TAG ${GIT_REF_ARG})
 
-            # Git-specific options
-            if(NOT PARSED_ARGS_GIT_SHALLOW)
-                list(APPEND FETCH_ARGS GIT_SHALLOW TRUE)
-            else()
+            if(PARSED_ARGS_GIT_SHALLOW)
                 list(APPEND FETCH_ARGS GIT_SHALLOW ${PARSED_ARGS_GIT_SHALLOW})
             endif()
 
@@ -96,7 +92,6 @@ function(find_or_fetch_package name)
                 list(APPEND FETCH_ARGS GIT_PROGRESS TRUE)
             endif()
         else()
-            # URL-based download (faster for releases)
             set(FETCH_ARGS URL ${PARSED_ARGS_DOWNLOAD_URL})
             if(PARSED_ARGS_DOWNLOAD_HASH)
                 list(APPEND FETCH_ARGS URL_HASH ${PARSED_ARGS_DOWNLOAD_HASH})
@@ -208,9 +203,7 @@ function(populate_package name)
 
     set(FETCH_ARGS GIT_REPOSITORY ${PARSED_ARGS_GIT_REPOSITORY} GIT_TAG ${GIT_REF_ARG})
 
-    if(NOT PARSED_ARGS_GIT_SHALLOW)
-        list(APPEND FETCH_ARGS GIT_SHALLOW TRUE)
-    else()
+    if(PARSED_ARGS_GIT_SHALLOW)
         list(APPEND FETCH_ARGS GIT_SHALLOW ${PARSED_ARGS_GIT_SHALLOW})
     endif()
 
