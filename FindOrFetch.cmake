@@ -171,6 +171,24 @@ function(populate_package name)
         PARSE_ARGV 1 PARSED_ARGS "QUIET" "GIT_REPOSITORY;GIT_TAG;GIT_SHALLOW;GIT_BRANCH;SOURCE_SUBDIR"
         "PATCH_COMMAND;UPDATE_COMMAND;PATCH_FILE")
 
+    # Check for pre-fetched source directory override
+    string(TOUPPER "${name}" uppercase_name)
+    if(DEFINED FETCHCONTENT_SOURCE_DIR_${uppercase_name})
+        set(${name}_SOURCE_DIR
+            "${FETCHCONTENT_SOURCE_DIR_${uppercase_name}}"
+            PARENT_SCOPE)
+        set(${name}_BINARY_DIR
+            "${CMAKE_CURRENT_BINARY_DIR}/${name}-build"
+            PARENT_SCOPE)
+        set(${name}_POPULATED
+            TRUE
+            PARENT_SCOPE)
+        if(NOT PARSED_ARGS_QUIET)
+            message(STATUS "Using pre-fetched ${name} from ${FETCHCONTENT_SOURCE_DIR_${uppercase_name}}")
+        endif()
+        return()
+    endif()
+
     if(PARSED_ARGS_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "unknown argument ${PARSED_ARGS_UNPARSED_ARGUMENTS}")
     endif()

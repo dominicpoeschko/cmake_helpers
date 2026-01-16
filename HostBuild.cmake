@@ -23,6 +23,9 @@ function(configure_host_build targetname)
         if(variable_name MATCHES "^CMAKE_BUILD_TYPE")
             list(APPEND cmake_extra_args "-D${variable_name}=${${variable_name}}")
         endif()
+        if(variable_name MATCHES "^FETCHCONTENT_SOURCE_DIR_")
+            list(APPEND cmake_extra_args "-D${variable_name}=${${variable_name}}")
+        endif()
     endforeach()
 
     execute_process(
