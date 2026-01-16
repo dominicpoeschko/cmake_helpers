@@ -13,18 +13,24 @@ function(configure_host_build targetname)
     endif()
 
     set(build_dir ${CMAKE_CURRENT_BINARY_DIR}/host_build)
-
-    get_cmake_property(all_variables VARIABLES)
     set(cmake_extra_args "-G${CMAKE_GENERATOR}")
+
+    get_cmake_property(all_variables CACHE_VARIABLES)
     foreach(variable_name ${all_variables})
-        if(variable_name MATCHES "^USE")
-            list(APPEND cmake_extra_args "-D${variable_name}=${${variable_name}}")
-        endif()
-        if(variable_name MATCHES "^CMAKE_BUILD_TYPE")
-            list(APPEND cmake_extra_args "-D${variable_name}=${${variable_name}}")
-        endif()
-        if(variable_name MATCHES "^FETCHCONTENT_SOURCE_DIR_")
-            list(APPEND cmake_extra_args "-D${variable_name}=${${variable_name}}")
+        if(variable_name MATCHES "^USE"
+           OR variable_name MATCHES "^CMAKE_BUILD_TYPE"
+           OR variable_name MATCHES "^FETCHCONTENT_SOURCE_DIR_")
+
+            get_property(
+                var_type
+                CACHE ${variable_name}
+                PROPERTY TYPE)
+
+            if(NOT var_type)
+                set(var_type STRING)
+            endif()
+
+            list(APPEND cmake_extra_args "-D${variable_name}:${var_type}=${${variable_name}}")
         endif()
     endforeach()
 
