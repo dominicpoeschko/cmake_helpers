@@ -281,6 +281,10 @@ function(populate_package name)
         list(APPEND FETCH_ARGS SOURCE_SUBDIR ${PARSED_ARGS_SOURCE_SUBDIR})
     endif()
 
+    # Put sources in _deps folder like FetchContent_MakeAvailable does
+    list(APPEND FETCH_ARGS SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/${name}-src BINARY_DIR
+         ${CMAKE_CURRENT_BINARY_DIR}/_deps/${name}-build)
+
     FetchContent_Populate(${name} ${FETCH_ARGS})
 
     # Propagate FetchContent variables to parent scope
