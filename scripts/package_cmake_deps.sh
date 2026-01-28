@@ -30,7 +30,7 @@ echo "Fetching dependencies via CMake..."
 cmake -S "${SOURCE_DIR}" -B "${BUILD_DIR}" -DUSE_FORCE_FETCH=ON
 
 # Remove .git directories from build dir
-find "${BUILD_DIR}" -type d -name '.git' -exec rm -rf {} + 2>/dev/null || true
+find "${BUILD_DIR}" -type d \( -name '.git' -o -name '.github' \) -exec rm -rf {} + 2>/dev/null || true
 
 # Find and copy all *-src directories
 echo "Copying dependencies..."
