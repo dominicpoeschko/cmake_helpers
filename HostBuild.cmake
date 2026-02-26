@@ -1,6 +1,6 @@
 function(configure_host_build)
 
-    cmake_parse_arguments(PARSE_ARGV 0 PARSED_ARGS "CLEAR_ENV" "" "")
+    cmake_parse_arguments(PARSE_ARGV 0 PARSED_ARGS "CLEAR_ENV" "" "FORWARD_VARS")
 
     set(all_targets ${PARSED_ARGS_UNPARSED_ARGUMENTS})
     list(GET all_targets 0 primary_target)
@@ -38,6 +38,17 @@ function(configure_host_build)
 
             file(APPEND ${preload_file} "set(${variable_name} \"${${variable_name}}\" CACHE ${var_type} \"\")\n")
         endif()
+    endforeach()
+
+    foreach(variable_name IN LISTS PARSED_ARGS_FORWARD_VARS)
+        get_property(
+            var_type
+            CACHE ${variable_name}
+            PROPERTY TYPE)
+        if(NOT var_type)
+            set(var_type STRING)
+        endif()
+        file(APPEND ${preload_file} "set(${variable_name} \"${${variable_name}}\" CACHE ${var_type} \"\" FORCE)\n")
     endforeach()
 
     execute_process(
