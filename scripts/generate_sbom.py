@@ -40,8 +40,15 @@ def git(*args, cwd=None):
     return ''
 
 
+_VERSION_FILES = [
+    'VERSION', 'VERSION.txt', 'version', 'version.txt',
+]
+
+_VERSION_LINE_RE = re.compile(r'^v?(\d+\.\d+(?:\.\d+)*)$')
+
+
 def detect_version(src_dir: Path) -> str:
-    """Detect version: exact tag → project(VERSION …) → short SHA."""
+    """Detect version: exact tag → project(VERSION …) → version file → short SHA."""
     tag = git('describe', '--tags', '--exact-match', 'HEAD', cwd=src_dir)
     if tag and re.match(r'^v?\d', tag):
         return tag
@@ -55,6 +62,15 @@ def detect_version(src_dir: Path) -> str:
         )
         if m:
             return m.group(1)
+
+    for name in _VERSION_FILES:
+        vf = src_dir / name
+        if vf.is_file():
+            line = vf.read_text(errors='replace').strip().splitlines()[
+                0].strip()
+            m = _VERSION_LINE_RE.match(line)
+            if m:
+                return m.group(1)
 
     return git('rev-parse', '--short', 'HEAD', cwd=src_dir) or 'unknown'
 
