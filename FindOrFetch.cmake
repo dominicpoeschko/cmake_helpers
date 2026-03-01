@@ -6,6 +6,10 @@ set(USE_GIT_BRANCH
     false
     CACHE BOOL "Use git clone with GIT_BRANCH instead of DOWNLOAD_URL when both are provided")
 
+set(USE_GIT_TAG
+    false
+    CACHE BOOL "Use git clone with GIT_TAG instead of DOWNLOAD_URL when both are provided")
+
 function(find_or_fetch_package name)
 
     cmake_parse_arguments(
@@ -32,10 +36,12 @@ function(find_or_fetch_package name)
         message(FATAL_ERROR "find_or_fetch_package needs GIT_TAG when using GIT_REPOSITORY")
     endif()
 
-    # Determine fetch method: prefer git if USE_GIT_BRANCH is set and GIT_BRANCH is provided
+    # Determine fetch method: prefer git when USE_GIT_BRANCH/USE_GIT_TAG is set, or when no DOWNLOAD_URL is available.
     set(USE_GIT_FETCH FALSE)
     if(PARSED_ARGS_GIT_REPOSITORY)
         if(USE_GIT_BRANCH AND PARSED_ARGS_GIT_BRANCH)
+            set(USE_GIT_FETCH TRUE)
+        elseif(USE_GIT_TAG AND PARSED_ARGS_GIT_TAG)
             set(USE_GIT_FETCH TRUE)
         elseif(NOT PARSED_ARGS_DOWNLOAD_URL)
             set(USE_GIT_FETCH TRUE)

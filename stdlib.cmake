@@ -7,7 +7,7 @@ set(USE_STD_LIB
     CACHE STRING "Choose the stdlib to use, options are: libc++ libstdc++")
 set_property(CACHE USE_STD_LIB PROPERTY STRINGS libc++ libstdc++)
 
-set(std_lib_libcpp_debug_cxx_flags -D_LIBCPP_DEBUG=1 -D_LIBCPP_ENABLE_NODISCARD)
+set(std_lib_libcpp_debug_cxx_flags -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
 
 set(std_lib_libcpp_debug_c_flags)
 set(std_lib_libcpp_debug_linker_flags)
