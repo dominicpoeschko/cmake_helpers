@@ -310,7 +310,7 @@ def compute_checksum(src_dir: Path) -> str:
     parts = []
     for f in files:
         h = hashlib.sha256(f.read_bytes()).hexdigest()
-        parts.append(f'{h}  {f}')
+        parts.append(f'{h}  {f.relative_to(src_dir)}')
     return hashlib.sha256('\n'.join(parts).encode()).hexdigest()
 
 
