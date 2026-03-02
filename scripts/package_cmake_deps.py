@@ -7,13 +7,15 @@ output package and generates a CMake preload file with FETCHCONTENT_SOURCE_DIR_*
 variables for each dependency, enabling fully offline builds.
 
 Usage:
-    package_cmake_deps.py [--sbom] [--work-dir <dir>] [name]
+    package_cmake_deps.py [--sbom] [--work-dir <dir>] [--exclude <dep>]... [name]
     OUTPUT_DIR=/path/to/output package_cmake_deps.py [options] [name]
 
   --sbom              Generate a CycloneDX 1.6 SBOM (sbom.json) alongside the package.
   --work-dir <dir>    Use <dir> as the CMake build directory instead of a temp dir.
                       The directory is NOT deleted on exit, making subsequent runs faster
                       (CMake reuses the already-fetched sources).
+  --exclude <dep>     Exclude a dependency by name from both the package and the SBOM.
+                      May be repeated: --exclude foo --exclude bar
 """
 
 import argparse
@@ -41,6 +43,18 @@ def git(*args, cwd=None):
     return ''
 
 
+def find_src_dirs(build_dir: Path, exclude: list[str] | None = None) -> list[Path]:
+    """Find all *-src dependency directories under build_dir, excluding named deps."""
+    exclude_set = set(exclude or [])
+    return sorted(
+        p for p in build_dir.rglob('*-src')
+        if p.is_dir()
+        and '_deps' in p.parts
+        and 'CMakeFiles' not in p.parts
+        and p.name.removesuffix('-src') not in exclude_set
+    )
+
+
 def dirs_equal(a: Path, b: Path) -> bool:
     """Deep equality check, ignoring .git and .github trees."""
     cmp = filecmp.dircmp(str(a), str(b), hide=['.git', '.github'])
@@ -59,6 +73,8 @@ def main():
                         help='Generate a CycloneDX 1.6 SBOM (sbom.json)')
     parser.add_argument('--work-dir', metavar='DIR',
                         help='CMake build directory (kept between runs; skips temp dir)')
+    parser.add_argument('--exclude', metavar='DEP', action='append', default=[],
+                        help='Exclude a dependency by name (may be repeated)')
     args = parser.parse_args()
 
     source_dir = Path.cwd()
@@ -102,12 +118,7 @@ def main():
                 or git('rev-parse', '--short', 'HEAD', cwd=source_dir)
                 or 'unknown'
             )
-            sbom_dirs = sorted(
-                p for p in build_dir.rglob('*-src')
-                if p.is_dir()
-                and '_deps' in p.parts
-                and 'CMakeFiles' not in p.parts
-            )
+            sbom_dirs = find_src_dirs(build_dir, args.exclude)
             sbom_script = Path(__file__).parent / 'generate_sbom.py'
             subprocess.run(
                 [
@@ -122,12 +133,7 @@ def main():
             )
 
         print('Copying dependencies...')
-        src_dirs = sorted(
-            p for p in build_dir.rglob('*-src')
-            if p.is_dir()
-            and '_deps' in p.parts
-            and 'CMakeFiles' not in p.parts
-        )
+        src_dirs = find_src_dirs(build_dir, args.exclude)
 
         copied_deps: dict[str, Path] = {}  # name → first source path seen
 
@@ -166,7 +172,6 @@ def main():
                 f'"${{CMAKE_CURRENT_LIST_DIR}}/{dep_name}" CACHE PATH "")'
             )
         lines.append('')
-        lines.append('set(FETCHCONTENT_FULLY_DISCONNECTED ON CACHE BOOL "")')
         lines.append('set(USE_FORCE_FETCH ON CACHE BOOL "")')
         preload_file.write_text('\n'.join(lines) + '\n')
 
