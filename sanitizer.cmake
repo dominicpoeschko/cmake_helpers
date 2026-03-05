@@ -3,22 +3,30 @@ set(USE_SANITIZER
     CACHE STRING "Choose the Sanitizer to use, options are: none thread address fuzzer")
 set_property(CACHE USE_SANITIZER PROPERTY STRINGS none thread address fuzzer)
 
+set(USE_EXTRA_SANITIZERS
+    ON
+    CACHE BOOL "Enable extra clang sanitizer flags: integer, implicit-conversion, nullability")
+
 set(sanitizer_common_flags -ggdb -fno-omit-frame-pointer -fsanitize-recover=all)
 
 set(sanitizer_common_flags_clang ${sanitizer_common_flags})
 
 set(sanitizer_common_flags_gcc ${sanitizer_common_flags})
 
-set(sanitizer_thread_flags_clang ${sanitizer_common_flags_clang}
-                                 -fsanitize=thread,integer,implicit-conversion,nullability)
+if(USE_EXTRA_SANITIZERS)
+    set(sanitizer_extra_flags ,integer,implicit-conversion,nullability)
+else()
+    set(sanitizer_extra_flags)
+endif()
+
+set(sanitizer_thread_flags_clang ${sanitizer_common_flags_clang} -fsanitize=thread${sanitizer_extra_flags})
 
 set(sanitizer_thread_flags_gcc ${sanitizer_common_flags_gcc} -fsanitize=thread)
 
-set(sanitizer_address_flags_clang ${sanitizer_common_flags_clang}
-                                  -fsanitize=address,undefined,integer,implicit-conversion,nullability)
+set(sanitizer_address_flags_clang ${sanitizer_common_flags_clang} -fsanitize=address,undefined${sanitizer_extra_flags})
 
 set(sanitizer_fuzzer_flags_clang ${sanitizer_common_flags_clang}
-                                 -fsanitize=address,undefined,integer,implicit-conversion,nullability,fuzzer)
+                                 -fsanitize=address,undefined${sanitizer_extra_flags},fuzzer)
 
 set(sanitizer_address_flags_gcc ${sanitizer_common_flags_gcc} -fsanitize=address,undefined)
 
