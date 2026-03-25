@@ -1,3 +1,7 @@
+set(USE_TIDY_HOST_BUILDS
+    true
+    CACHE BOOL "enable clang-tidy for host builds")
+
 function(configure_host_build)
 
     cmake_parse_arguments(PARSE_ARGV 0 PARSED_ARGS "CLEAR_ENV" "" "FORWARD_VARS")
@@ -25,6 +29,7 @@ function(configure_host_build)
     get_cmake_property(all_variables CACHE_VARIABLES)
     foreach(variable_name ${all_variables})
         if(variable_name MATCHES "^USE"
+           OR variable_name MATCHES "^TIDY"
            OR variable_name MATCHES "^CMAKE_BUILD_TYPE"
            OR variable_name MATCHES "^FETCHCONTENT_SOURCE_DIR_")
 
@@ -50,6 +55,10 @@ function(configure_host_build)
         endif()
         file(APPEND ${preload_file} "set(${variable_name} \"${${variable_name}}\" CACHE ${var_type} \"\" FORCE)\n")
     endforeach()
+
+    if(NOT USE_TIDY_HOST_BUILDS)
+        file(APPEND ${preload_file} "set(USE_TIDY OFF CACHE BOOL \"\" FORCE)\n")
+    endif()
 
     execute_process(
         COMMAND ${CMAKE_COMMAND} -C ${preload_file} -S ${CMAKE_CURRENT_LIST_DIR} -B ${build_dir} ${cmake_extra_args}
