@@ -12,14 +12,22 @@ endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Release" "Debug")
 
 set(USE_CPP_STANDARD
-    "23"
-    CACHE STRING "Choose the C++ Standard, options are: 11 14 17 20 23")
-set_property(CACHE USE_CPP_STANDARD PROPERTY STRINGS "11" "14" "17" "20" "23")
+    "26"
+    CACHE STRING "Choose the C++ Standard, options are: 11 14 17 20 23 26")
+set_property(
+    CACHE USE_CPP_STANDARD
+    PROPERTY STRINGS
+             "11"
+             "14"
+             "17"
+             "20"
+             "23"
+             "26")
 
 set(USE_C_STANDARD
     "23"
-    CACHE STRING "Choose the C Standard, options are: 99 11 17 20")
-set_property(CACHE USE_C_STANDARD PROPERTY STRINGS "99" "11" "17" "20")
+    CACHE STRING "Choose the C Standard, options are: 99 11 17 20 23")
+set_property(CACHE USE_C_STANDARD PROPERTY STRINGS "99" "11" "17" "20" "23")
 
 set(USE_OPTIMIZE_LEVEL
     "3"
