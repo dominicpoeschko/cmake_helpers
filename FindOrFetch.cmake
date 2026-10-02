@@ -157,7 +157,10 @@ function(find_or_fetch_package name)
             list(APPEND FETCH_ARGS SOURCE_SUBDIR ${PARSED_ARGS_SOURCE_SUBDIR})
         endif()
 
-        FetchContent_Declare(${name} ${FETCH_ARGS})
+        # SYSTEM: a fetched dependency's headers are third-party code like those of a package find_package() found
+        # (imported targets are SYSTEM already) - their warnings are not ours, and USE_WARNINGS_AS_ERRORS must not turn
+        # them into errors in a consumer's translation units
+        FetchContent_Declare(${name} ${FETCH_ARGS} SYSTEM)
         FetchContent_MakeAvailable(${name})
 
         if(NOT PARSED_ARGS_QUIET)
