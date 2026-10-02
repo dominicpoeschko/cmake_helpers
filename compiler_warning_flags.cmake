@@ -2,6 +2,12 @@ set(USE_ALL_WARNINGS
     true
     CACHE BOOL "Enable \"all\" warnings")
 
+# Off by default: a new compiler release adds warnings, and that must not break a user's build. CI turns it on so new
+# warnings are noticed at once.
+set(WARNINGS_AS_ERRORS
+    false
+    CACHE BOOL "Treat warnings of targets with target_add_warning_flags as errors")
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     if(USE_ALL_WARNINGS)
         if(${USE_CPP_STANDARD} GREATER 11)
@@ -97,4 +103,9 @@ endif()
 function(target_add_warning_flags target scope)
     target_compile_options(${target} ${scope} $<$<COMPILE_LANGUAGE:CXX>:${cxx_warning_flags}>)
     target_compile_options(${target} ${scope} $<$<COMPILE_LANGUAGE:C>:${c_warning_flags}>)
+    # Only the target itself: COMPILE_WARNING_AS_ERROR does not propagate, so fetched dependencies built without these
+    # flags stay unaffected. An INTERFACE scope compiles nothing of its own.
+    if(WARNINGS_AS_ERRORS AND NOT "${scope}" STREQUAL "INTERFACE")
+        set_target_properties(${target} PROPERTIES COMPILE_WARNING_AS_ERROR ON)
+    endif()
 endfunction()
