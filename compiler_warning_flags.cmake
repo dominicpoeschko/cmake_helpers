@@ -4,7 +4,7 @@ set(USE_ALL_WARNINGS
 
 # Off by default: a new compiler release adds warnings, and that must not break a user's build. CI turns it on so new
 # warnings are noticed at once.
-set(WARNINGS_AS_ERRORS
+set(USE_WARNINGS_AS_ERRORS
     false
     CACHE BOOL "Treat warnings of targets with target_add_warning_flags as errors")
 
@@ -30,6 +30,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
             -Wno-disabled-macro-expansion
             -Wno-unsafe-buffer-usage-in-libc-call
             -Wno-nrvo
+            # clang 23: any mutation of a container parameter "invalidates" it, so `v.resize(n); v.size()` warns.
+            -Wno-lifetime-safety-invalidation
             -Wno-unknown-warning-option)
 
         set(c_warning_flags -Weverything -Wpedantic -Wno-padded)
@@ -105,7 +107,7 @@ function(target_add_warning_flags target scope)
     target_compile_options(${target} ${scope} $<$<COMPILE_LANGUAGE:C>:${c_warning_flags}>)
     # Only the target itself: COMPILE_WARNING_AS_ERROR does not propagate, so fetched dependencies built without these
     # flags stay unaffected. An INTERFACE scope compiles nothing of its own.
-    if(WARNINGS_AS_ERRORS AND NOT "${scope}" STREQUAL "INTERFACE")
+    if(USE_WARNINGS_AS_ERRORS AND NOT "${scope}" STREQUAL "INTERFACE")
         set_target_properties(${target} PROPERTIES COMPILE_WARNING_AS_ERROR ON)
     endif()
 endfunction()
