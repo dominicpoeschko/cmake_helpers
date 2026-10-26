@@ -125,16 +125,19 @@ function(target_add_optimizer_flags target scope)
     set_target_properties(${target} PROPERTIES C_STANDARD_REQUIRED TRUE)
     set_target_properties(${target} PROPERTIES C_EXTENSIONS FALSE)
 
+    # no LTO for clang with libstdc++: GNU ld through the LLVM plugin, which with ASan discards the asan.module_ctor
+    # comdats their .init_array entries still reference
+    if("${USE_STD_LIB}" STREQUAL "libstdc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        set(tmp_lto_flag)
+    else()
+        set(tmp_lto_flag ${lto_flag})
+    endif()
+
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
         if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
             target_compile_options(${target} ${scope} $<$<COMPILE_LANGUAGE:CXX>:/O2 -DNDEBUG>)
             target_compile_options(${target} ${scope} $<$<COMPILE_LANGUAGE:C>:/O2 -DNDEBUG>)
         else()
-            if("${USE_STD_LIB}" STREQUAL "libstdc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-                set(tmp_lto_flag)
-            else()
-                set(tmp_lto_flag ${lto_flag})
-            endif()
             target_compile_options(
                 ${target}
                 ${scope}
@@ -163,12 +166,12 @@ function(target_add_optimizer_flags target scope)
                 ${scope}
                 $<$<COMPILE_LANGUAGE:CXX>:${fastmath_flag}
                 ${optimize_flag}
-                ${lto_flag}
+                ${tmp_lto_flag}
                 ${rtti_flag}
                 -ggdb>)
             target_compile_options(${target} ${scope} $<$<COMPILE_LANGUAGE:C>:${fastmath_flag} ${optimize_flag}
-                                   ${lto_flag} -ggdb>)
-            target_link_options(${target} ${scope} ${lto_flag} ${native_flag})
+                                   ${tmp_lto_flag} -ggdb>)
+            target_link_options(${target} ${scope} ${tmp_lto_flag} ${native_flag})
         endif()
     endif()
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
