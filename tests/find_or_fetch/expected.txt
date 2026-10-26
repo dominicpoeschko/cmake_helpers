@@ -1,0 +1,30 @@
+== git, tag
+declare a: GIT_REPOSITORY;https://example.invalid/a.git;GIT_TAG;v1;GIT_PROGRESS;TRUE;SYSTEM
+make_available: a
+== git, tag, shallow, subdir, quiet
+declare b: GIT_REPOSITORY;https://example.invalid/b.git;GIT_TAG;v2;GIT_SHALLOW;ON;SOURCE_SUBDIR;sub;SYSTEM
+make_available: b
+== url + hash, git present but not chosen
+declare c: URL;https://example.invalid/c.tar.gz;URL_HASH;SHA256=00;DOWNLOAD_EXTRACT_TIMESTAMP;ON;SYSTEM
+make_available: c
+== git chosen by USE_GIT_TAG
+declare d: GIT_REPOSITORY;https://example.invalid/d.git;GIT_TAG;v4;GIT_PROGRESS;TRUE;SYSTEM
+make_available: d
+== git branch by USE_GIT_BRANCH
+declare e: GIT_REPOSITORY;https://example.invalid/e.git;GIT_TAG;main;GIT_PROGRESS;TRUE;SYSTEM
+make_available: e
+== git, patch file
+declare f: GIT_REPOSITORY;https://example.invalid/f.git;GIT_TAG;v6;GIT_PROGRESS;TRUE;PATCH_COMMAND;git;reset;--hard;HEAD;&&;git;clean;-fdx;&&;git;apply;--3way;/p/f.patch;UPDATE_COMMAND;git;fetch;origin;&&;git;reset;--hard;v6;&&;git;clean;-fdx;&&;git;apply;--3way;/p/f.patch;UPDATE_DISCONNECTED;TRUE;SYSTEM
+make_available: f
+== url, patch and update command
+declare g: URL;https://example.invalid/g.zip;DOWNLOAD_EXTRACT_TIMESTAMP;ON;PATCH_COMMAND;echo;patch;UPDATE_DISCONNECTED;TRUE;UPDATE_COMMAND;echo;up;SYSTEM
+make_available: g
+== populate, git
+populate h: GIT_REPOSITORY;https://example.invalid/h.git;GIT_TAG;v7;GIT_PROGRESS;TRUE;SOURCE_DIR;/bin-dir/_deps/h-src;BINARY_DIR;/bin-dir/_deps/h-build
+== populate, quiet, shallow, patch file, subdir
+populate i: GIT_REPOSITORY;https://example.invalid/i.git;GIT_TAG;v8;GIT_SHALLOW;ON;PATCH_COMMAND;git;reset;--hard;HEAD;&&;git;clean;-fdx;&&;git;apply;--3way;/p/i.patch;UPDATE_COMMAND;git;fetch;origin;&&;git;reset;--hard;v8;&&;git;clean;-fdx;&&;git;apply;--3way;/p/i.patch;UPDATE_DISCONNECTED;TRUE;SOURCE_SUBDIR;sub;SOURCE_DIR;/bin-dir/_deps/i-src;BINARY_DIR;/bin-dir/_deps/i-build
+== populate, branch, patch command
+populate j: GIT_REPOSITORY;https://example.invalid/j.git;GIT_TAG;dev;GIT_PROGRESS;TRUE;PATCH_COMMAND;echo;p;UPDATE_DISCONNECTED;TRUE;SOURCE_DIR;/bin-dir/_deps/j-src;BINARY_DIR;/bin-dir/_deps/j-build
+j: populated-src populated-build TRUE
+== populate, pre-fetched source dir
+k: /pre/k /bin-dir/k-build TRUE

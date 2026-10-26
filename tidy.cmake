@@ -1,107 +1,36 @@
-set(USE_TIDY
-    false
-    CACHE BOOL "clang tidy")
+# clang-tidy while compiling (USE_TIDY=ON): target_add_tidy_flags(<target> <scope>) sets the target's C/CXX_CLANG_TIDY.
+# The checks come from a configuration file, never from a list here: TIDY_CONFIG_FILE when it is set (passed with
+# --config-file; a host build configured inside another project receives it through HostBuild's ^TIDY forwarding), else
+# clang-tidy's own lookup of the nearest .clang-tidy above each source. Findings are warnings in the build output of the
+# objects that are rebuilt.
 
-if(NOT DEFINED TIDY_HEADER_FILTER)
-    set(TIDY_HEADER_FILTER ".hpp")
-endif()
+set(USE_TIDY
+    OFF
+    CACHE BOOL "run clang-tidy while compiling")
+set(TIDY_CONFIG_FILE
+    ""
+    CACHE FILEPATH "clang-tidy configuration passed with --config-file (empty: clang-tidy's own .clang-tidy lookup)")
 
 if(USE_TIDY)
     find_program(
         CLANG_TIDY_EXE
         NAMES "clang-tidy"
         DOC "Path to clang-tidy executable")
-
     mark_as_advanced(FORCE CLANG_TIDY_EXE)
-
     if(NOT CLANG_TIDY_EXE)
-        message(FATAL_ERROR "clang-tidy not found.")
-    else()
-        set(common_clang_tidy ${CLANG_TIDY_EXE} -p=.)
-
-        set(common_clang_tidy_disabled_checks
-            cppcoreguidelines-avoid-magic-numbers
-            cppcoreguidelines-macro-usage
-            google-readability-todo
-            llvm-header-guard
-            readability-magic-numbers
-            llvmlibc*
-            altera*
-            ${GLOBAL_COMMON_CLANG_TIDY_DISABLED_CHECKS})
-
-        set(cxx_clang_tidy_disabled_checks
-            cert-dcl21-cpp
-            cppcoreguidelines-non-private-member-variables-in-classes
-            fuchsia-default-arguments-calls
-            fuchsia-default-arguments-declarations
-            fuchsia-overloaded-operator
-            fuchsia-trailing-return
-            google-readability-namespace-comments
-            google-runtime-references
-            llvm-namespace-comment
-            misc-non-private-member-variables-in-classes
-            modernize-concat-nested-namespaces
-            modernize-use-default-member-init
-            modernize-use-nodiscard
-            modernize-use-trailing-return-type
-            clang-diagnostic-c++17-extensions
-            clang-diagnostic-c++20-extensions
-            hicpp-named-parameter
-            readability-named-parameter
-            hicpp-exception-baseclass
-            llvm-qualified-auto
-            readability-qualified-auto
-            bugprone-easily-swappable-parameters
-            google-build-using-namespace
-            hicpp-use-auto
-            modernize-use-auto
-            readability-convert-member-functions-to-static
-            cppcoreguidelines-avoid-c-arrays
-            hicpp-avoid-c-arrays
-            modernize-avoid-c-arrays
-            google-explicit-constructor
-            hicpp-explicit-conversions
-            cppcoreguidelines-pro-bounds-pointer-arithmetic
-            bugprone-exception-escape
-            misc-include-cleaner
-            readability-function-cognitive-complexity
-            cert-dcl59-cpp
-            fuchsia-header-anon-namespaces
-            google-build-namespaces
-            cppcoreguidelines-pro-type-reinterpret-cast
-            bugprone-empty-catch
-            misc-no-recursion
-            readability-redundant-casting
-            modernize-use-integer-sign-comparison
-            google-readability-casting
-            fuchsia-multiple-inheritance
-            cppcoreguidelines-pro-bounds-constant-array-index
-            cppcoreguidelines-rvalue-reference-param-not-moved
-            cppcoreguidelines-avoid-const-or-ref-data-members
-            ${GLOBAL_CXX_CLANG_TIDY_DISABLED_CHECKS})
-
-        set(c_clang_tidy_disabled_checks ${GLOBAL_C_CLANG_TIDY_DISABLED_CHECKS})
-
-        list(TRANSFORM common_clang_tidy_disabled_checks PREPEND "-")
-        list(JOIN common_clang_tidy_disabled_checks "," common_clang_tidy_disabled_checks)
-
-        list(TRANSFORM cxx_clang_tidy_disabled_checks PREPEND "-")
-        list(JOIN cxx_clang_tidy_disabled_checks "," cxx_clang_tidy_disabled_checks)
-
-        list(TRANSFORM c_clang_tidy_disabled_checks PREPEND "-")
-        list(JOIN c_clang_tidy_disabled_checks "," c_clang_tidy_disabled_checks)
-
-        list(JOIN common_clang_tidy ";" clang_tidy)
-        set(DO_CLANG_TIDY_CXX ${clang_tidy} -header-filter=${TIDY_HEADER_FILTER}
-                              -checks=*,${common_clang_tidy_disabled_checks},${cxx_clang_tidy_disabled_checks})
-        set(DO_CLANG_TIDY_C ${clang_tidy} -header-filter=${TIDY_HEADER_FILTER}
-                            -checks=*,${common_clang_tidy_disabled_checks},${c_clang_tidy_disabled_checks})
+        message(FATAL_ERROR "USE_TIDY: clang-tidy not found")
+    endif()
+    set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "--quiet")
+    if(TIDY_CONFIG_FILE)
+        if(NOT EXISTS "${TIDY_CONFIG_FILE}")
+            message(FATAL_ERROR "USE_TIDY: TIDY_CONFIG_FILE ${TIDY_CONFIG_FILE} does not exist")
+        endif()
+        list(APPEND DO_CLANG_TIDY "--config-file=${TIDY_CONFIG_FILE}")
     endif()
 endif()
 
 function(target_add_tidy_flags target scope)
     if(USE_TIDY)
-        set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY_CXX}")
-        set_target_properties(${target} PROPERTIES C_CLANG_TIDY "${DO_CLANG_TIDY_C}")
+        set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}" C_CLANG_TIDY "${DO_CLANG_TIDY}")
     endif()
 endfunction()

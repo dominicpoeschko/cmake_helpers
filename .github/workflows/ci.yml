@@ -1,0 +1,42 @@
+name: CI
+
+on:
+    workflow_dispatch:
+    push:
+        branches:
+            - master
+    pull_request:
+        branches:
+            - master
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        container:
+            image: archlinux:latest
+        strategy:
+            matrix:
+                compiler:
+                    - {cc: gcc, cxx: g++}
+                    - {cc: clang, cxx: clang++}
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v5
+
+            - name: Set up C++ environment
+              run: |
+                pacman -Syu --noconfirm
+                pacman -S --noconfirm cmake ninja base-devel ${{ matrix.compiler.cc == 'clang' && 'clang' || '' }}
+
+            - name: Configure CMake
+              run: cmake -S tests -B build -G Ninja
+              env:
+                CC: ${{ matrix.compiler.cc }}
+                CXX: ${{ matrix.compiler.cxx }}
+
+            - name: Run tests
+              run: ctest --test-dir build --output-on-failure
+              env:
+                CC: ${{ matrix.compiler.cc }}
+                CXX: ${{ matrix.compiler.cxx }}
