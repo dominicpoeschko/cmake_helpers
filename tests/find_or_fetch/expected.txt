@@ -27,4 +27,4 @@ populate i: GIT_REPOSITORY;https://example.invalid/i.git;GIT_TAG;v8;GIT_SHALLOW;
 populate j: GIT_REPOSITORY;https://example.invalid/j.git;GIT_TAG;dev;GIT_PROGRESS;TRUE;PATCH_COMMAND;echo;p;UPDATE_DISCONNECTED;TRUE;SOURCE_DIR;/bin-dir/_deps/j-src;BINARY_DIR;/bin-dir/_deps/j-build
 j: populated-src populated-build TRUE
 == populate, pre-fetched source dir
-k: /pre/k /bin-dir/k-build TRUE
+k: <pre-k> /bin-dir/k-build TRUE

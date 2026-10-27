@@ -111,6 +111,8 @@ populate_package(
 set(USE_GIT_BRANCH OFF)
 file(APPEND "${PROBE_OUT}" "j: ${j_SOURCE_DIR} ${j_BINARY_DIR} ${j_POPULATED}\n")
 form("populate, pre-fetched source dir")
-set(FETCHCONTENT_SOURCE_DIR_K /pre/k)
+# an existing directory (a missing one is refused), written as <pre-k>
+set(FETCHCONTENT_SOURCE_DIR_K "${CMAKE_CURRENT_LIST_DIR}/probe_modules")
 populate_package(k GIT_REPOSITORY https://example.invalid/k.git GIT_TAG v10)
+string(REPLACE "${FETCHCONTENT_SOURCE_DIR_K}" "<pre-k>" k_SOURCE_DIR "${k_SOURCE_DIR}")
 file(APPEND "${PROBE_OUT}" "k: ${k_SOURCE_DIR} ${k_BINARY_DIR} ${k_POPULATED}\n")

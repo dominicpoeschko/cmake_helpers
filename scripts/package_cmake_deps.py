@@ -172,6 +172,7 @@ def main():
                 f'"${{CMAKE_CURRENT_LIST_DIR}}/{dep_name}" CACHE PATH "")'
             )
         lines.append('')
+        lines.append('set(FETCHCONTENT_FULLY_DISCONNECTED ON CACHE BOOL "")')
         lines.append('set(USE_FORCE_FETCH ON CACHE BOOL "")')
         preload_file.write_text('\n'.join(lines) + '\n')
 

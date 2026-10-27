@@ -172,7 +172,11 @@ function(populate_package name)
 
     # Check for pre-fetched source directory override
     string(TOUPPER "${name}" uppercase_name)
-    if(DEFINED FETCHCONTENT_SOURCE_DIR_${uppercase_name})
+    if(FETCHCONTENT_SOURCE_DIR_${uppercase_name})
+        if(NOT IS_DIRECTORY "${FETCHCONTENT_SOURCE_DIR_${uppercase_name}}")
+            message(FATAL_ERROR "populate_package(${name}): FETCHCONTENT_SOURCE_DIR_${uppercase_name} points to "
+                                "a missing directory: ${FETCHCONTENT_SOURCE_DIR_${uppercase_name}}")
+        endif()
         set(${name}_SOURCE_DIR
             "${FETCHCONTENT_SOURCE_DIR_${uppercase_name}}"
             PARENT_SCOPE)
@@ -186,6 +190,13 @@ function(populate_package name)
             message(STATUS "Using pre-fetched ${name} from ${FETCHCONTENT_SOURCE_DIR_${uppercase_name}}")
         endif()
         return()
+    endif()
+
+    # The direct FetchContent_Populate(name ...details...) form below bypasses CMake's disconnected-mode handling.
+    # Enforce it here before any download or update.
+    if(FETCHCONTENT_FULLY_DISCONNECTED)
+        message(FATAL_ERROR "populate_package(${name}): no local source in disconnected mode. "
+                            "Set FETCHCONTENT_SOURCE_DIR_${uppercase_name} to the prepared dependency directory.")
     endif()
 
     if(NOT PARSED_ARGS_QUIET)

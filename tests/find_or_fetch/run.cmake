@@ -53,6 +53,10 @@ must_fail(populate_no_repository_prefetched "populate_package needs GIT_REPOSITO
           "${pre}populate_package(x GIT_TAG v1)")
 must_fail(fetch_patch_file_and_update "Cannot specify PATCH_FILE together with PATCH_COMMAND"
           "find_or_fetch_package(x GIT_REPOSITORY u GIT_TAG v1 PATCH_FILE /p UPDATE_COMMAND echo)")
+must_fail(populate_prefetched_missing "points to a missing"
+          "${pre}populate_package(x GIT_REPOSITORY https://example.invalid/x.git GIT_TAG v1)")
+must_fail(populate_disconnected_no_source "no local source in disconnected mode"
+          "set(FETCHCONTENT_FULLY_DISCONNECTED ON)\npopulate_package(x GIT_REPOSITORY u GIT_TAG v1)")
 must_fail(fetch_typo "unknown argument SOURCE_SUBDIRR"
           "find_or_fetch_package(x GIT_REPOSITORY u GIT_TAG v1 SOURCE_SUBDIRR s)")
 must_fail(fetch_no_source "find_or_fetch_package needs either DOWNLOAD_URL or GIT_REPOSITORY"
