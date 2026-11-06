@@ -25,6 +25,11 @@ find_or_fetch_package(
 
 > Note: This does not work with cross-compiling!
 
+With a `FETCHCONTENT_SOURCE_DIR_<NAME>` set, `find_or_fetch_package` reports that directory ("using pre-fetched
+<dir>") instead of a fetch: FetchContent takes it as it is, nothing is downloaded and `PATCH_FILE`/`PATCH_COMMAND` do
+not run. FindOrFetch.cmake is included once per configure (`include_guard(GLOBAL)`): every project that uses it
+includes it itself, and a later include keeps a consumer's own replacement of `find_or_fetch_package`.
+
 `populate_package(<name> GIT_REPOSITORY <url> GIT_TAG <ref> [GIT_SHALLOW] [GIT_BRANCH] [SOURCE_SUBDIR] [PATCH_FILE |
 PATCH_COMMAND/UPDATE_COMMAND] [QUIET])` only populates the sources (`<name>_SOURCE_DIR`), it adds nothing to the
 build. A `FETCHCONTENT_SOURCE_DIR_<NAME>` is taken as is - after the arguments are checked, so a wrong argument fails

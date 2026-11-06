@@ -6,7 +6,7 @@ file(REMOVE_RECURSE "${WORK_DIR}")
 file(MAKE_DIRECTORY "${WORK_DIR}")
 set(failures 0)
 
-# 1. the arguments handed to FetchContent, per form
+# the arguments handed to FetchContent, per form
 execute_process(
     COMMAND ${CMAKE_COMMAND} -DHELPERS_DIR=${HELPERS_DIR} -DPROBE_OUT=${WORK_DIR}/probe.txt -P
             ${CMAKE_CURRENT_LIST_DIR}/probe.cmake
@@ -20,13 +20,18 @@ if(NOT rc EQUAL 0 OR NOT same EQUAL 0)
     math(EXPR failures "${failures} + 1")
 endif()
 
-# 1. calls that must fail, each with the text it must fail with
-function(must_fail name pattern body)
+# the script of one case: the stand-in FetchContent, FindOrFetch.cmake, USE_FORCE_FETCH, then `body`
+function(write_case name body)
     file(
         WRITE "${WORK_DIR}/${name}.cmake"
         "list(PREPEND CMAKE_MODULE_PATH \"${CMAKE_CURRENT_LIST_DIR}/probe_modules\")\n"
         "set(PROBE_OUT \"${WORK_DIR}/${name}.out\")\n" "include(\"${HELPERS_DIR}/FindOrFetch.cmake\")\n"
         "set(USE_FORCE_FETCH ON)\n" "${body}\n")
+endfunction()
+
+# calls that must fail, each with the text it must fail with
+function(must_fail name pattern body)
+    write_case(${name} "${body}")
     execute_process(
         COMMAND ${CMAKE_COMMAND} -P ${WORK_DIR}/${name}.cmake
         RESULT_VARIABLE rc
@@ -62,6 +67,37 @@ must_fail(fetch_typo "unknown argument SOURCE_SUBDIRR"
 must_fail(fetch_no_source "find_or_fetch_package needs either DOWNLOAD_URL or GIT_REPOSITORY"
           "find_or_fetch_package(x)")
 must_fail(fetch_no_tag "find_or_fetch_package needs GIT_TAG" "find_or_fetch_package(x GIT_REPOSITORY u)")
+
+# what a call reports, exactly: a pre-fetched source directory is named, never a download from the repository
+function(must_print name expected body)
+    write_case(${name} "${body}")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -P ${WORK_DIR}/${name}.cmake
+        RESULT_VARIABLE rc
+        OUTPUT_VARIABLE out
+        ERROR_VARIABLE err)
+    if(NOT rc EQUAL 0 OR NOT out STREQUAL expected)
+        message(SEND_ERROR "${name}: rc ${rc}, expected the output\n${expected}got\n${out}${err}")
+        set(failures
+            1
+            PARENT_SCOPE)
+    else()
+        message(STATUS "${name}: reported as expected")
+    endif()
+endfunction()
+
+must_print(
+    fetch_reports_repository
+    "-- Searching for x package...\n-- x not found locally, fetching from u\n-- Successfully fetched x\n"
+    "find_or_fetch_package(x GIT_REPOSITORY u GIT_TAG v1)")
+must_print(fetch_reports_prefetched "-- Searching for x package...\n-- x not found locally, using pre-fetched /pre/x\n"
+           "${pre}find_or_fetch_package(x GIT_REPOSITORY u GIT_TAG v1 PATCH_FILE /p)")
+
+# a second include (a dependency's own CMakeLists) keeps a consumer's replacement of find_or_fetch_package
+set(replacement "function(find_or_fetch_package name)\n  message(STATUS \"replacement \${name}\")\nendfunction()\n")
+set(reinclude "include(\"${HELPERS_DIR}/FindOrFetch.cmake\")\n")
+must_print(second_include_keeps_a_replacement "-- replacement x\n"
+           "${replacement}${reinclude}find_or_fetch_package(x GIT_REPOSITORY u GIT_TAG v1)")
 
 if(failures)
     message(FATAL_ERROR "find_or_fetch: failures")

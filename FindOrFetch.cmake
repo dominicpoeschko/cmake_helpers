@@ -1,3 +1,8 @@
+# Once per configure: every CMakeLists that uses the helpers includes this file itself, and each include would define
+# find_or_fetch_package anew - silently dropping a consumer's replacement of it (a check that every dependency is
+# preinstalled, say) for every call after the include
+include_guard(GLOBAL)
+
 set(USE_FORCE_FETCH
     false
     CACHE BOOL "Force FindOrFetch to always fetch")
@@ -134,8 +139,15 @@ function(find_or_fetch_package name)
         return()
     endif()
 
+    # A FETCHCONTENT_SOURCE_DIR_<NAME> (a bundle's preload, a superproject) makes FetchContent_MakeAvailable take that
+    # directory as it is: nothing is downloaded and PATCH_FILE/PATCH_COMMAND do not run, so the message names it
+    string(TOUPPER "${name}" uppercase_name)
+    set(source_dir "${FETCHCONTENT_SOURCE_DIR_${uppercase_name}}")
+
     if(NOT PARSED_ARGS_QUIET)
-        if(USE_GIT_FETCH)
+        if(source_dir)
+            message(STATUS "${name} not found locally, using pre-fetched ${source_dir}")
+        elseif(USE_GIT_FETCH)
             message(STATUS "${name} not found locally, fetching from ${PARSED_ARGS_GIT_REPOSITORY}")
         else()
             message(STATUS "${name} not found locally, downloading from ${PARSED_ARGS_DOWNLOAD_URL}")
@@ -152,7 +164,7 @@ function(find_or_fetch_package name)
     FetchContent_Declare(${name} ${FETCH_ARGS} SYSTEM)
     FetchContent_MakeAvailable(${name})
 
-    if(NOT PARSED_ARGS_QUIET)
+    if(NOT PARSED_ARGS_QUIET AND NOT source_dir)
         message(STATUS "Successfully fetched ${name}")
     endif()
 
