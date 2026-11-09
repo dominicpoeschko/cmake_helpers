@@ -21,14 +21,24 @@ endif()
 
 set(sanitizer_thread_flags_clang ${sanitizer_common_flags_clang} -fsanitize=thread${sanitizer_extra_flags})
 
-set(sanitizer_thread_flags_gcc ${sanitizer_common_flags_gcc} -fsanitize=thread)
+# gcc's middle-end warnings misread sanitizer-instrumented code at -O2 and up: maybe-uninitialized inside libstdc++'s
+# <regex> and on a conditional's aggregate temporaries, uninitialized inside libstdc++'s checked vector (_Safe_vector)
+# under nlohmann::json, stringop-overflow "writing 1 byte into a region of size 0" in a vector's push_back - code that
+# builds warning-free without the sanitizer. And the instrumentation makes a big test function too big for a pass:
+# disabled-optimization "ext-dce disabled: 5602 basic blocks". Off in sanitizer builds; the build without one has them
+# (its LTO link included). A -Wno- of a specific warning beats -Wall whatever the order.
+set(sanitizer_gcc_warning_flags -Wno-maybe-uninitialized -Wno-uninitialized -Wno-stringop-overflow
+                                -Wno-disabled-optimization)
+
+set(sanitizer_thread_flags_gcc ${sanitizer_common_flags_gcc} -fsanitize=thread ${sanitizer_gcc_warning_flags})
 
 set(sanitizer_address_flags_clang ${sanitizer_common_flags_clang} -fsanitize=address,undefined${sanitizer_extra_flags})
 
 set(sanitizer_fuzzer_flags_clang ${sanitizer_common_flags_clang}
                                  -fsanitize=address,undefined${sanitizer_extra_flags},fuzzer)
 
-set(sanitizer_address_flags_gcc ${sanitizer_common_flags_gcc} -fsanitize=address,undefined)
+set(sanitizer_address_flags_gcc ${sanitizer_common_flags_gcc} -fsanitize=address,undefined
+                                ${sanitizer_gcc_warning_flags})
 
 if("${USE_SANITIZER}" STREQUAL "thread")
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")

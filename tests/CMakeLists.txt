@@ -18,3 +18,13 @@ add_test(
     NAME find_or_fetch
     COMMAND ${CMAKE_COMMAND} -DHELPERS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/..
             -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/find_or_fetch -P ${CMAKE_CURRENT_SOURCE_DIR}/find_or_fetch/run.cmake)
+
+# BuildOptions.cmake's flags: NDEBUG and USE_NDEBUG, the warning flags and -Werror on a gcc LTO link, clang's LTO with
+# libstdc++ only without a sanitizer (configures a C++ consumer, builds nothing).
+add_test(
+    NAME build_options
+    COMMAND
+        ${CMAKE_COMMAND} -DHELPERS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/..
+        -DCONSUMER_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build_options/consumer
+        -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/build_options -DGENERATOR=${CMAKE_GENERATOR} -P
+        ${CMAKE_CURRENT_SOURCE_DIR}/build_options/run.cmake)

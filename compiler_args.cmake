@@ -47,6 +47,10 @@ set(USE_LTO
     true
     CACHE BOOL "link time optimization")
 
+set(USE_NDEBUG
+    true
+    CACHE BOOL "Release defines NDEBUG; off: optimised and with its assert()s, as firmware ships (CI's test builds)")
+
 set(USE_RTTI
     false
     CACHE BOOL "runtime type information")
@@ -75,6 +79,12 @@ if(USE_LTO)
     set(lto_flag -flto=auto)
 else()
     set(lto_flag)
+endif()
+
+if(USE_NDEBUG)
+    set(ndebug_flag -DNDEBUG)
+else()
+    set(ndebug_flag)
 endif()
 
 if(USE_FASTMATH)
@@ -125,9 +135,11 @@ function(target_add_optimizer_flags target scope)
     set_target_properties(${target} PROPERTIES C_STANDARD_REQUIRED TRUE)
     set_target_properties(${target} PROPERTIES C_EXTENSIONS FALSE)
 
-    # no LTO for clang with libstdc++: GNU ld through the LLVM plugin, which with ASan discards the asan.module_ctor
-    # comdats their .init_array entries still reference
-    if("${USE_STD_LIB}" STREQUAL "libstdc++" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    # no LTO for clang with libstdc++ under a sanitizer: GNU ld through the LLVM plugin, which with ASan discards the
+    # asan.module_ctor comdats their .init_array entries still reference
+    if("${USE_STD_LIB}" STREQUAL "libstdc++"
+       AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
+       AND NOT "${USE_SANITIZER}" STREQUAL "none")
         set(tmp_lto_flag)
     else()
         set(tmp_lto_flag ${lto_flag})
@@ -135,8 +147,8 @@ function(target_add_optimizer_flags target scope)
 
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
         if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-            target_compile_options(${target} ${scope} $<$<COMPILE_LANGUAGE:CXX>:/O2 -DNDEBUG>)
-            target_compile_options(${target} ${scope} $<$<COMPILE_LANGUAGE:C>:/O2 -DNDEBUG>)
+            target_compile_options(${target} ${scope} $<$<COMPILE_LANGUAGE:CXX>:/O2 ${ndebug_flag}>)
+            target_compile_options(${target} ${scope} $<$<COMPILE_LANGUAGE:C>:/O2 ${ndebug_flag}>)
         else()
             target_compile_options(
                 ${target}
@@ -146,7 +158,7 @@ function(target_add_optimizer_flags target scope)
                 ${tmp_lto_flag}
                 ${native_flag}
                 ${rtti_flag}
-                -DNDEBUG>)
+                ${ndebug_flag}>)
             target_compile_options(
                 ${target}
                 ${scope}
@@ -154,7 +166,7 @@ function(target_add_optimizer_flags target scope)
                 ${optimize_flag}
                 ${tmp_lto_flag}
                 ${native_flag}
-                -DNDEBUG>)
+                ${ndebug_flag}>)
             target_link_options(${target} ${scope} ${tmp_lto_flag} ${native_flag})
         endif()
     else()

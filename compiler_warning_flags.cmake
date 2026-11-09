@@ -110,4 +110,18 @@ function(target_add_warning_flags target scope)
     if(USE_WARNINGS_AS_ERRORS AND NOT "${scope}" STREQUAL "INTERFACE")
         set_target_properties(${target} PROPERTIES COMPILE_WARNING_AS_ERROR ON)
     endif()
+    # With LTO, gcc runs the optimizer's warnings (maybe-uninitialized, stringop-overflow, -Wodr, lto-type-mismatch) at
+    # the link, whose command line had neither these flags nor -Werror: an LTO tree built warning-free where the same
+    # sources without LTO failed. An LTO link gets them too. gcc only: clang's LTO runs no frontend warnings at the
+    # link, and its -Weverything there would turn every compile-only flag on a link line into an "argument unused"
+    # error.
+    if(USE_LTO
+       AND NOT "${scope}" STREQUAL "INTERFACE"
+       AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        target_link_options(${target} PRIVATE $<$<LINK_LANGUAGE:CXX>:${cxx_warning_flags}>
+                            $<$<LINK_LANGUAGE:C>:${c_warning_flags}>)
+        if(USE_WARNINGS_AS_ERRORS)
+            target_link_options(${target} PRIVATE -Werror)
+        endif()
+    endif()
 endfunction()

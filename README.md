@@ -12,6 +12,12 @@ include(cmake_helpers/BuildOptions.cmake)
 
 If you want to just use one helper of this selection include the needed helper in your `CMakeLists.txt`.
 
+### Build types and the options that shape them
+No `CMAKE_BUILD_TYPE` means `Release`: `-O${USE_OPTIMIZE_LEVEL}` (3), LTO (`USE_LTO`), `-march=native`
+(`USE_NATIVE_FLAG`) and `-DNDEBUG`. `-DUSE_NDEBUG=OFF` keeps the `assert()`s in an optimised build, the way firmware
+ships and CI tests. A gcc LTO link gets the warning flags too, and `-Werror` with `USE_WARNINGS_AS_ERRORS`: gcc emits
+its optimizer's warnings there. Clang with libstdc++ links through GNU ld and gets LTO only without a sanitizer.
+
 ### FindOrFetch
 FindOrFetch first tries to find the package on the system. If it can't find the package it tries to fetch it with the CMake FetchContent functionality.
 The following example shows the usage in the `CMakeLists.txt` with the `fmt` library in version 9:

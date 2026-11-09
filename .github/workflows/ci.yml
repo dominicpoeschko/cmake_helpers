@@ -22,7 +22,7 @@ jobs:
 
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v5
+              uses: actions/checkout@v7
 
             - name: Set up C++ environment
               run: |
@@ -36,7 +36,7 @@ jobs:
                 CXX: ${{ matrix.compiler.cxx }}
 
             - name: Run tests
-              run: ctest --test-dir build --output-on-failure
+              run: ctest --test-dir build --output-on-failure -j"$(nproc)"
               env:
                 CC: ${{ matrix.compiler.cc }}
                 CXX: ${{ matrix.compiler.cxx }}
